@@ -32,7 +32,12 @@ logging.basicConfig(
 )
 
 # Initialize controller
-download_controller = DownloadController()
+try:
+    download_controller = DownloadController()
+    app.logger.info("Download controller initialized successfully")
+except Exception as e:
+    app.logger.error(f"Failed to initialize download controller: {e}")
+    download_controller = None
 
 # Background cleanup setup
 import threading
@@ -119,11 +124,20 @@ def get_stats():
 @app.route('/api/health')
 def health_check():
     """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.utcnow().isoformat(),
-        'version': '1.0.0'
-    })
+    try:
+        status = 'healthy' if download_controller else 'unhealthy'
+        return jsonify({
+            'status': status,
+            'timestamp': datetime.utcnow().isoformat(),
+            'version': '1.0.0',
+            'controller_ready': download_controller is not None
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
 
 @app.errorhandler(404)
 def not_found(error):

@@ -1,8 +1,7 @@
 {
   "deploy": {
     "startCommand": "gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 300 app:app",
-    "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 300
+    "healthcheckPath": "/api/health"
   },
   "build": {
     "builder": "nixpacks"
