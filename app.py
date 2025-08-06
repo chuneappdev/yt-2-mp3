@@ -139,7 +139,8 @@ def file_too_large(error):
     return jsonify({'error': 'File too large'}), 413
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
+    # Handle port configuration for different platforms
+    port = int(os.getenv('PORT', os.getenv('RAILWAY_PORT', os.getenv('FLASK_RUN_PORT', 5000))))
     debug = os.getenv('FLASK_ENV') == 'development'
     
     app.logger.info(f"Starting YouTube Downloader on port {port}")
