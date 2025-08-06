@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube to MP3/MP4 Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'youtube': '#FF0000',
+                        'youtube-dark': '#CC0000',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'bounce-subtle': 'bounce 2s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 min-h-screen">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 bg-black opacity-50"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20"></div>
+    
+    <!-- Main Container -->
+    <div class="relative z-10 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="py-6 px-4">
+            <div class="container mx-auto text-center">
+                <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">
+                    <i class="fab fa-youtube text-youtube mr-4"></i>
+                    YT Downloader
+                </h1>
+                <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                    Download your favorite YouTube videos as MP3 or MP4 with lightning speed
+                </p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow flex items-center justify-center px-4 py-8">
+            <div class="w-full max-w-4xl">
+                <!-- Download Card -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-8 md:p-12 shadow-2xl border border-white/20">
+                    
+                    <!-- URL Input Section -->
+                    <div class="mb-8">
+                        <div class="relative">
+                            <input 
+                                type="url" 
+                                id="youtubeUrl" 
+                                placeholder="Paste your YouTube URL here..."
+                                class="w-full px-6 py-4 pr-16 text-lg bg-white/20 backdrop-blur-md rounded-2xl text-white placeholder-gray-300 border border-white/30 focus:border-youtube focus:outline-none focus:ring-2 focus:ring-youtube/50 transition-all duration-300"
+                            >
+                            <button 
+                                id="pasteBtn" 
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-300 hover:text-white transition-colors duration-200"
+                                title="Paste from clipboard"
+                            >
+                                <i class="fas fa-clipboard text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Example URLs for testing -->
+                        <div class="mt-4 text-center">
+                            <p class="text-gray-300 text-sm mb-2">Try these example URLs:</p>
+                            <div class="flex flex-wrap justify-center gap-2">
+                                <button onclick="document.getElementById('youtubeUrl').value='https://www.youtube.com/watch?v=dQw4w9WgXcQ'; window.downloader.validateUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')" 
+                                        class="text-xs bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 px-3 py-1 rounded-lg transition-colors">
+                                    Test Video 1
+                                </button>
+                                <button onclick="document.getElementById('youtubeUrl').value='https://youtu.be/9bZkp7q19f0'; window.downloader.validateUrl('https://youtu.be/9bZkp7q19f0')" 
+                                        class="text-xs bg-green-600/30 hover:bg-green-600/50 text-green-200 px-3 py-1 rounded-lg transition-colors">
+                                    Test Video 2
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Format Selection -->
+                    <div class="mb-8">
+                        <h3 class="text-white text-lg font-semibold mb-4">Choose Format:</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="format-option active" data-format="mp3">
+                                <input type="radio" name="format" value="mp3" checked class="hidden">
+                                <div class="p-6 rounded-2xl border-2 border-white/30 bg-white/10 text-center cursor-pointer transition-all duration-300 hover:bg-white/20">
+                                    <i class="fas fa-music text-3xl text-green-400 mb-3"></i>
+                                    <h4 class="text-white font-semibold text-lg">MP3 Audio</h4>
+                                    <p class="text-gray-300 text-sm mt-2">High quality audio only</p>
+                                </div>
+                            </label>
+                            
+                            <label class="format-option" data-format="mp4">
+                                <input type="radio" name="format" value="mp4" class="hidden">
+                                <div class="p-6 rounded-2xl border-2 border-white/30 bg-white/10 text-center cursor-pointer transition-all duration-300 hover:bg-white/20">
+                                    <i class="fas fa-video text-3xl text-blue-400 mb-3"></i>
+                                    <h4 class="text-white font-semibold text-lg">MP4 Video</h4>
+                                    <p class="text-gray-300 text-sm mt-2">Full video with audio</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Video Preview (Hidden initially) -->
+                    <div id="videoPreview" class="mb-8 hidden">
+                        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                            <div class="flex items-center space-x-4">
+                                <img id="videoThumbnail" src="" alt="Video thumbnail" class="w-24 h-18 rounded-lg object-cover">
+                                <div class="flex-grow">
+                                    <h4 id="videoTitle" class="text-white font-semibold text-lg mb-2"></h4>
+                                    <p id="videoUploader" class="text-gray-300 text-sm mb-1"></p>
+                                    <p id="videoDuration" class="text-gray-400 text-sm"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Download Button -->
+                    <button 
+                        id="downloadBtn" 
+                        class="w-full py-4 bg-gradient-to-r from-youtube to-youtube-dark text-white font-bold text-xl rounded-2xl hover:shadow-2xl hover:shadow-youtube/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                        <i class="fas fa-download mr-3"></i>
+                        Download Now
+                    </button>
+
+                    <!-- Progress Section (Hidden initially) -->
+                    <div id="progressSection" class="mt-8 hidden">
+                        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-white font-semibold">Download Progress</span>
+                                <span id="progressPercent" class="text-youtube font-bold">0%</span>
+                            </div>
+                            
+                            <div class="w-full bg-white/20 rounded-full h-3 mb-4">
+                                <div 
+                                    id="progressBar" 
+                                    class="bg-gradient-to-r from-youtube to-youtube-dark h-3 rounded-full transition-all duration-300"
+                                    style="width: 0%"
+                                ></div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <p id="progressStatus" class="text-gray-300 mb-2">Preparing download...</p>
+                                <div id="downloadLink" class="hidden">
+                                    <a 
+                                        href="#" 
+                                        id="fileDownloadLink"
+                                        class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors duration-200"
+                                    >
+                                        <i class="fas fa-download mr-2"></i>
+                                        Download File
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Section -->
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-youtube rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-bolt text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-white font-semibold text-lg mb-2">Lightning Fast</h3>
+                        <p class="text-gray-300">Download videos in seconds with our optimized servers</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-shield-alt text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-white font-semibold text-lg mb-2">100% Safe</h3>
+                        <p class="text-gray-300">No malware, no ads, completely safe downloads</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-mobile-alt text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-white font-semibold text-lg mb-2">Mobile Friendly</h3>
+                        <p class="text-gray-300">Works perfectly on all devices and browsers</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="py-6 px-4 text-center text-gray-400">
+            <p>&copy; 2025 YT Downloader. Built with ❤️ for YouTube lovers.</p>
+        </footer>
+    </div>
+
+    <!-- Ad Container (Hidden initially) -->
+    <div id="adContainer" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center">
+            <h3 class="text-2xl font-bold mb-4">Download Complete! 🎉</h3>
+            <p class="text-gray-600 mb-6">Your file is ready! Before you continue, please check out our sponsors:</p>
+            
+            <!-- Google Ad Placeholder -->
+            <div id="googleAd" class="w-full h-60 bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center mb-6">
+                <div class="text-center">
+                    <i class="fas fa-ad text-4xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-500">Google Ad Space</p>
+                    <p class="text-sm text-gray-400">300x250</p>
+                </div>
+            </div>
+            
+            <button 
+                id="closeAdBtn" 
+                class="w-full py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors duration-200"
+            >
+                Continue to Download
+            </button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ads.js') }}"></script>
+</body>
+</html>

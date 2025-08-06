@@ -1,0 +1,187 @@
+/* Custom CSS for YouTube Downloader */
+
+/* Smooth animations */
+* {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 0, 0, 0.6);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 0, 0, 0.8);
+}
+
+/* Format selection styling */
+.format-option.active .bg-white\/10 {
+    background: rgba(255, 0, 0, 0.2) !important;
+    border-color: #FF0000 !important;
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+}
+
+.format-option:hover .bg-white\/10 {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Button hover effects */
+#downloadBtn:hover {
+    box-shadow: 0 10px 40px rgba(255, 0, 0, 0.4);
+}
+
+/* Progress bar animation */
+@keyframes progressPulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.progress-active {
+    animation: progressPulse 2s ease-in-out infinite;
+}
+
+/* Floating animation for icons */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Glow effect for active elements */
+.glow {
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+/* Loading spinner */
+.spinner {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 3px solid #FF0000;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Success animation */
+@keyframes successBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.success-bounce {
+    animation: successBounce 0.5s ease-in-out;
+}
+
+/* Error shake animation */
+@keyframes errorShake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+
+.error-shake {
+    animation: errorShake 0.5s ease-in-out;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+    
+    h1 {
+        font-size: 2.5rem !important;
+    }
+    
+    .format-option .p-6 {
+        padding: 1rem !important;
+    }
+}
+
+/* Dark mode enhancements */
+.backdrop-blur-lg {
+    backdrop-filter: blur(16px);
+}
+
+.backdrop-blur-md {
+    backdrop-filter: blur(12px);
+}
+
+/* Custom button styles */
+.btn-primary {
+    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 0, 0, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Video preview animations */
+.video-preview-enter {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.video-preview-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.5s ease;
+}
+
+/* Ad container animations */
+.ad-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.ad-fade-out {
+    animation: fadeOut 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
