@@ -154,7 +154,18 @@ def file_too_large(error):
 
 if __name__ == '__main__':
     # Handle port configuration for different platforms
-    port = int(os.getenv('PORT', os.getenv('RAILWAY_PORT', os.getenv('FLASK_RUN_PORT', 5000))))
+    port_str = os.getenv('PORT', os.getenv('RAILWAY_PORT', os.getenv('FLASK_RUN_PORT', '5000')))
+    
+    # Handle cases where PORT might be literally "$PORT" string
+    if port_str == '$PORT' or port_str == '${PORT}':
+        port_str = '5000'
+    
+    try:
+        port = int(port_str)
+    except (ValueError, TypeError):
+        app.logger.warning(f"Invalid PORT value '{port_str}', using default 5000")
+        port = 5000
+    
     debug = os.getenv('FLASK_ENV') == 'development'
     
     app.logger.info(f"Starting YouTube Downloader on port {port}")

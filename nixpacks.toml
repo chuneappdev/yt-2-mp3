@@ -5,7 +5,7 @@ nixPkgs = ['python39', 'ffmpeg']
 cmds = ['pip install -r requirements.txt']
 
 [phases.build]
-cmds = ['echo "Build phase completed"']
+cmds = ['mkdir -p static/downloads logs']
 
 [start]
-cmd = 'gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 300 app:app'
+cmd = './start.sh'
