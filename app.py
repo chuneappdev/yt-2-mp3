@@ -108,16 +108,25 @@ def test_yt_dlp():
     try:
         import yt_dlp
         
-        # Test with a known working video
-        test_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        # Test with a known working video (shorter video for faster testing)
+        test_url = "https://www.youtube.com/watch?v=jNQXAC9IVRw"  # "Me at the zoo" - first YouTube video
         
-        with yt_dlp.YoutubeDL({'quiet': True, 'format': 'best'}) as ydl:
+        ydl_opts = {
+            'quiet': True, 
+            'format': 'best/worst',
+            'no_warnings': True,
+            'ignoreerrors': False,
+            'no_check_certificate': True
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(test_url, download=False)
             
         return jsonify({
             'success': True,
             'yt_dlp_version': yt_dlp.version.__version__,
             'test_video_title': info.get('title', 'Unknown'),
+            'test_video_duration': info.get('duration', 0),
             'message': 'yt-dlp is working correctly'
         })
         
@@ -125,7 +134,7 @@ def test_yt_dlp():
         return jsonify({
             'success': False,
             'error': str(e),
-            'message': 'yt-dlp test failed'
+            'message': 'yt-dlp test failed - try a different video URL'
         }), 500
 
 @app.route('/api/stats')

@@ -18,9 +18,10 @@ class YouTubeDownloader:
                 'quiet': True,
                 'no_warnings': True,
                 'extractaudio': False,
-                'format': 'best',
+                'format': 'best/worst',  # More flexible format selection
                 'noplaylist': True,
                 'ignoreerrors': False,
+                'no_check_certificate': True,  # Help with SSL issues
             }
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -42,8 +43,10 @@ class YouTubeDownloader:
                 }
         except Exception as e:
             error_msg = str(e)
-            if "No video formats found" in error_msg:
+            if "No video formats found" in error_msg or "Requested format is not available" in error_msg:
                 error_msg = "This video is not available for download. It may be private, region-blocked, or removed."
+            elif "Video unavailable" in error_msg:
+                error_msg = "This video is unavailable or has been removed."
             return {
                 'success': False,
                 'error': error_msg
@@ -90,7 +93,7 @@ class YouTubeDownloader:
             # Configure download options based on format
             if format_type == 'mp3':
                 ydl_opts = {
-                    'format': 'bestaudio/best',
+                    'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
                     'outtmpl': os.path.join(download_path, '%(title)s.%(ext)s'),
                     'postprocessors': [{
                         'key': 'FFmpegExtractAudio',
@@ -103,15 +106,19 @@ class YouTubeDownloader:
                     'extractaudio': True,
                     'audioformat': 'mp3',
                     'audioquality': '192',
+                    'ignoreerrors': False,
+                    'no_warnings': True,
                 }
             else:  # mp4
                 ydl_opts = {
-                    'format': 'best[height<=720]/best',
+                    'format': 'best[height<=720][ext=mp4]/best[height<=720]/best[ext=mp4]/best/worst',
                     'outtmpl': os.path.join(download_path, '%(title)s.%(ext)s'),
                     'progress_hooks': [progress_hook],
                     'postprocessor_hooks': [postprocessor_hook],
                     'noplaylist': True,
                     'merge_output_format': 'mp4',
+                    'ignoreerrors': False,
+                    'no_warnings': True,
                 }
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
