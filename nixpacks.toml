@@ -6,6 +6,3 @@ cmds = ['pip install -r requirements.txt']
 
 [phases.build]
 cmds = ['mkdir -p static/downloads logs']
-
-[start]
-cmd = './start.sh'

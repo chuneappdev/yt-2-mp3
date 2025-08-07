@@ -1,8 +1,0 @@
-{
-  "deploy": {
-    "healthcheckPath": "/api/health"
-  },
-  "build": {
-    "builder": "nixpacks"
-  }
-}
