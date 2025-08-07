@@ -104,31 +104,54 @@ def get_video_info():
 
 @app.route('/api/test', methods=['GET'])
 def test_yt_dlp():
-    """Test yt-dlp functionality"""
+    """Test yt-dlp functionality with multiple videos"""
     try:
         import yt_dlp
         
-        # Test with a known working video (shorter video for faster testing)
-        test_url = "https://www.youtube.com/watch?v=jNQXAC9IVRw"  # "Me at the zoo" - first YouTube video
+        # Test with multiple known working videos
+        test_urls = [
+            "https://www.youtube.com/watch?v=jNQXAC9IVRw",  # Me at the zoo
+            "https://www.youtube.com/watch?v=BaW_jenozKc",  # YouTube test video
+            "https://www.youtube.com/watch?v=aqz-KE-bpKQ",  # Big Buck Bunny
+        ]
         
         ydl_opts = {
-            'quiet': True, 
+            'quiet': False, 
             'format': 'best/worst',
-            'no_warnings': True,
+            'no_warnings': False,
             'ignoreerrors': False,
-            'no_check_certificate': True
+            'no_check_certificate': True,
+            'geo_bypass': True,
+            'geo_bypass_country': 'US',
         }
         
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(test_url, download=False)
-            
-        return jsonify({
-            'success': True,
-            'yt_dlp_version': yt_dlp.version.__version__,
-            'test_video_title': info.get('title', 'Unknown'),
-            'test_video_duration': info.get('duration', 0),
-            'message': 'yt-dlp is working correctly'
-        })
+        working_video = None
+        last_error = None
+        
+        for test_url in test_urls:
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(test_url, download=False)
+                    working_video = info
+                    break
+            except Exception as e:
+                last_error = str(e)
+                continue
+        
+        if working_video:
+            return jsonify({
+                'success': True,
+                'yt_dlp_version': yt_dlp.version.__version__,
+                'test_video_title': working_video.get('title', 'Unknown'),
+                'test_video_duration': working_video.get('duration', 0),
+                'message': 'yt-dlp is working correctly'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': last_error or 'All test videos failed',
+                'message': 'yt-dlp test failed - server may be in a restricted region'
+            }), 500
         
     except Exception as e:
         return jsonify({

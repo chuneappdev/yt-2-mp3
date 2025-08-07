@@ -15,13 +15,16 @@ class YouTubeDownloader:
         """Extract video information from YouTube URL"""
         try:
             ydl_opts = {
-                'quiet': True,
-                'no_warnings': True,
+                'quiet': False,  # Enable output for debugging
+                'no_warnings': False,  # Show warnings for debugging
                 'extractaudio': False,
                 'format': 'best/worst',  # More flexible format selection
                 'noplaylist': True,
                 'ignoreerrors': False,
                 'no_check_certificate': True,  # Help with SSL issues
+                'geo_bypass': True,  # Try to bypass geo-restrictions
+                'geo_bypass_country': 'US',  # Set country for bypass
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             }
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -43,10 +46,23 @@ class YouTubeDownloader:
                 }
         except Exception as e:
             error_msg = str(e)
+            print(f"yt-dlp error: {error_msg}")  # Debug logging
+            
             if "No video formats found" in error_msg or "Requested format is not available" in error_msg:
-                error_msg = "This video is not available for download. It may be private, region-blocked, or removed."
+                error_msg = "This video format is not available. The video may have restricted access or be region-blocked."
             elif "Video unavailable" in error_msg:
                 error_msg = "This video is unavailable or has been removed."
+            elif "Private video" in error_msg:
+                error_msg = "This is a private video and cannot be downloaded."
+            elif "This live event" in error_msg:
+                error_msg = "Live streams cannot be downloaded. Please try again after the stream ends."
+            elif "Sign in to confirm your age" in error_msg:
+                error_msg = "This video is age-restricted and cannot be downloaded without authentication."
+            elif "blocked" in error_msg.lower():
+                error_msg = "This video is blocked in the server's region. Try a different video."
+            else:
+                error_msg = f"Download failed: {error_msg}"
+                
             return {
                 'success': False,
                 'error': error_msg
@@ -107,7 +123,10 @@ class YouTubeDownloader:
                     'audioformat': 'mp3',
                     'audioquality': '192',
                     'ignoreerrors': False,
-                    'no_warnings': True,
+                    'no_warnings': False,  # Enable for debugging
+                    'geo_bypass': True,
+                    'geo_bypass_country': 'US',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 }
             else:  # mp4
                 ydl_opts = {
@@ -118,7 +137,10 @@ class YouTubeDownloader:
                     'noplaylist': True,
                     'merge_output_format': 'mp4',
                     'ignoreerrors': False,
-                    'no_warnings': True,
+                    'no_warnings': False,  # Enable for debugging
+                    'geo_bypass': True,
+                    'geo_bypass_country': 'US',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 }
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
