@@ -3,7 +3,7 @@ class AdManager {
     constructor() {
         this.adDisplayed = false;
         this.adConfig = {
-            adSlot: '1234567890', // Replace with your actual ad slot
+            adSlot: 'ca-app-pub-3940256099942544/6300978111', // Test ad slot - replace with your actual ad slot
             adFormat: 'rectangle',
             adSize: [300, 250]
         };
@@ -22,11 +22,11 @@ class AdManager {
         const script = document.createElement('script');
         script.async = true;
         script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-        script.setAttribute('data-ad-client', 'ca-pub-XXXXXXXXXX'); // Replace with your publisher ID
+        script.setAttribute('data-ad-client', 'ca-pub-3940256099942544'); // Test publisher ID - replace with your actual publisher ID
         
         // Add error handling
         script.onerror = () => {
-            console.log('Failed to load Google Ads');
+            console.log('Failed to load Google Ads - using fallback');
             this.initFallbackAd();
         };
         

@@ -12,18 +12,8 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configure CORS for Railway deployment
-allowed_origins = [
-    'https://web-production-ccb44.up.railway.app',
-    'http://localhost:5000',
-    'http://127.0.0.1:5000'
-]
-
-# Add any custom origins from environment
-cors_origins = os.getenv('CORS_ORIGINS', '')
-if cors_origins:
-    allowed_origins.extend(cors_origins.split(','))
-
-CORS(app, origins=allowed_origins)
+# Use wildcard for Railway subdomains
+CORS(app, origins="*", supports_credentials=True)
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
