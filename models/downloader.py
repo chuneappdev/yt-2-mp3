@@ -12,40 +12,59 @@ class YouTubeDownloader:
         self.download_threads = {}
     
     def get_video_info(self, url):
-        """Extract video information from YouTube URL"""
+        """Get video information with enhanced format detection and geo-bypass"""
         try:
-            # Multiple configuration attempts for maximum compatibility
+            error_msg = "Failed to get video information"
+            
+            # Multiple configurations with different strategies
             ydl_configs = [
-                # Config 1: Full bypass with cookies
+                # Config 1: Standard with basic geo-bypass
                 {
-                    'quiet': False,
-                    'no_warnings': False,
+                    'quiet': True,
+                    'no_warnings': True,
                     'extractaudio': False,
-                    'format': 'best/worst',
                     'noplaylist': True,
-                    'ignoreerrors': False,
-                    'no_check_certificate': True,
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                     'geo_bypass': True,
                     'geo_bypass_country': 'US',
-                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'referer': 'https://www.youtube.com/',
-                    'age_limit': 999,  # Try to bypass age restrictions
+                    'format': 'best/bestvideo+bestaudio/worst',  # More flexible format selection
+                    'ignoreerrors': True,
+                    'extract_flat': False,
                 },
-                # Config 2: Minimal config
+                # Config 2: Mobile user agent with Canada bypass
                 {
                     'quiet': True,
-                    'format': 'worst/best',
-                    'noplaylist': True,
-                    'geo_bypass': True,
-                },
-                # Config 3: Different user agent
-                {
-                    'quiet': True,
-                    'format': 'best',
+                    'no_warnings': True,
+                    'extractaudio': False,
                     'noplaylist': True,
                     'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15',
                     'geo_bypass': True,
-                    'geo_bypass_country': 'CA',  # Try Canada
+                    'geo_bypass_country': 'CA',
+                    'format': 'worst/best',  # Try worst quality first to ensure availability
+                    'ignoreerrors': True,
+                },
+                # Config 3: Most permissive with multiple bypasses
+                {
+                    'quiet': True,
+                    'no_warnings': True,
+                    'extractaudio': False,
+                    'noplaylist': True,
+                    'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+                    'geo_bypass': True,
+                    'geo_bypass_country': 'GB',
+                    'format': 'mp4/worst',  # Try basic mp4 format
+                    'ignoreerrors': True,
+                    'extractor_args': {'youtube': {'skip': ['dash']}},  # Skip DASH formats which can be problematic
+                },
+                # Config 4: Ultra-basic extraction
+                {
+                    'quiet': True,
+                    'no_warnings': True,
+                    'extractaudio': False,
+                    'noplaylist': True,
+                    'format': '18/worst',  # Format 18 is basic 360p mp4, widely available
+                    'ignoreerrors': True,
+                    'youtube_include_dash_manifest': False,
                 }
             ]
             
@@ -53,25 +72,33 @@ class YouTubeDownloader:
             
             for i, ydl_opts in enumerate(ydl_configs):
                 try:
-                    print(f"Trying config {i+1}")
+                    print(f"Trying config {i+1}/4: {ydl_opts.get('geo_bypass_country', 'no-bypass')}")
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(url, download=False)
                         
                         if info is None:
+                            print(f"Config {i+1}: No info returned")
                             continue
                         
-                        print(f"Success with config {i+1}")
+                        # Check if we have any formats available
+                        formats = info.get('formats', [])
+                        if not formats and i < 3:  # Don't fail on last attempt
+                            print(f"Config {i+1}: No formats available, trying next")
+                            continue
+                        
+                        print(f"✅ Success with config {i+1}")
                         return {
                             'success': True,
                             'title': info.get('title', 'Unknown'),
                             'duration': info.get('duration', 0),
                             'thumbnail': info.get('thumbnail', ''),
                             'uploader': info.get('uploader', 'Unknown'),
-                            'view_count': info.get('view_count', 0)
+                            'view_count': info.get('view_count', 0),
+                            'available_formats': len(formats)
                         }
                 except Exception as e:
                     last_error = str(e)
-                    print(f"Config {i+1} failed: {last_error}")
+                    print(f"❌ Config {i+1} failed: {last_error}")
                     continue
             
             # If all configs failed
@@ -141,10 +168,10 @@ class YouTubeDownloader:
                     # Find the actual file that was created
                     self._find_final_filename(task_id)
             
-            # Configure download options based on format
+            # Configure download options based on format with fallback strategies
             if format_type == 'mp3':
                 ydl_opts = {
-                    'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
+                    'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/worst',  # More permissive audio selection
                     'outtmpl': os.path.join(download_path, '%(title)s.%(ext)s'),
                     'postprocessors': [{
                         'key': 'FFmpegExtractAudio',
@@ -157,29 +184,72 @@ class YouTubeDownloader:
                     'extractaudio': True,
                     'audioformat': 'mp3',
                     'audioquality': '192',
-                    'ignoreerrors': False,
-                    'no_warnings': False,  # Enable for debugging
+                    'ignoreerrors': True,  # Don't fail completely on minor errors
+                    'no_warnings': False,
                     'geo_bypass': True,
                     'geo_bypass_country': 'US',
-                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'youtube_include_dash_manifest': False,  # Skip DASH for compatibility
+                    'extractor_args': {'youtube': {'skip': ['dash']}},
                 }
             else:  # mp4
                 ydl_opts = {
-                    'format': 'best[height<=720][ext=mp4]/best[height<=720]/best[ext=mp4]/best/worst',
+                    'format': 'best[height<=720][ext=mp4]/best[height<=480][ext=mp4]/worst[ext=mp4]/18/worst',  # More fallbacks including format 18
                     'outtmpl': os.path.join(download_path, '%(title)s.%(ext)s'),
                     'progress_hooks': [progress_hook],
                     'postprocessor_hooks': [postprocessor_hook],
                     'noplaylist': True,
                     'merge_output_format': 'mp4',
-                    'ignoreerrors': False,
-                    'no_warnings': False,  # Enable for debugging
+                    'ignoreerrors': True,  # Don't fail completely on minor errors
+                    'no_warnings': False,
                     'geo_bypass': True,
                     'geo_bypass_country': 'US',
-                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'youtube_include_dash_manifest': False,  # Skip DASH for compatibility
+                    'extractor_args': {'youtube': {'skip': ['dash']}},
                 }
             
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
+            # Try download with primary configuration
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+            except Exception as e:
+                print(f"Primary download failed: {str(e)}")
+                # Try fallback with most basic configuration
+                self.progress_data[task_id]['status'] = 'retrying'
+                
+                if format_type == 'mp3':
+                    fallback_opts = {
+                        'format': 'worst',  # Use worst quality for reliability
+                        'outtmpl': os.path.join(download_path, '%(title)s.%(ext)s'),
+                        'postprocessors': [{
+                            'key': 'FFmpegExtractAudio',
+                            'preferredcodec': 'mp3',
+                            'preferredquality': '128',  # Lower quality for reliability
+                        }],
+                        'progress_hooks': [progress_hook],
+                        'postprocessor_hooks': [postprocessor_hook],
+                        'noplaylist': True,
+                        'extractaudio': True,
+                        'ignoreerrors': True,
+                        'geo_bypass': True,
+                        'youtube_include_dash_manifest': False,
+                    }
+                else:  # mp4
+                    fallback_opts = {
+                        'format': '18/worst',  # Format 18 is basic 360p mp4
+                        'outtmpl': os.path.join(download_path, '%(title)s.%(ext)s'),
+                        'progress_hooks': [progress_hook],
+                        'postprocessor_hooks': [postprocessor_hook],
+                        'noplaylist': True,
+                        'ignoreerrors': True,
+                        'geo_bypass': True,
+                        'youtube_include_dash_manifest': False,
+                    }
+                
+                print("Trying fallback download configuration...")
+                with yt_dlp.YoutubeDL(fallback_opts) as ydl:
+                    ydl.download([url])
                 
         except Exception as e:
             self.progress_data[task_id]['status'] = 'error'
